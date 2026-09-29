@@ -1,0 +1,7 @@
+webchangesを利用し、各種マスター類の更新を検知、記録、通知
+webchangesなどpythonのライブラリはuvでインストール
+Github Actions workflowで定期的に動作
+urlcheckのcacheはRedis cloudで保存
+結果は、Github pagesで
+jobs.yaml,config.yamlはこのディレクトリに保存。
+メール通知用のGmail app pass、Redis cloudのusername,passwdなどの認証情報はGithub Secretsに保存。

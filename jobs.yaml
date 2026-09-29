@@ -1,0 +1,49 @@
+name: "薬価基準収載品目リスト及び後発医薬品に関する情報について（令和８年８月13日適用）"
+url: "https://www.mhlw.go.jp/topics/2026/04/tp20260401-01.html"
+encoding: Shift_JIS
+# ignore_cached: false   # デフォルトなので省略可。条件付きリクエストを使う
+---
+name: "傷病名マスター"
+url: "https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/kihonmasta_07.html"
+encoding: UTF-8
+---
+name: "医薬品マスター"
+url: "https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/kihonmasta_04.html"
+encoding: UTF-8
+---
+name: "特定器材マスター"
+url: "https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/kihonmasta_05.html"
+encoding: UTF-8
+---
+name: "医科診療行為マスター"
+url: "https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/kihonmasta_01.html"
+encoding: UTF-8
+---
+name: "新着情報@厚生労働省"
+url: "https://www.mhlw.go.jp/stf/new-info/"
+encoding: UTF-8
+---
+name: "GemMed"
+url: "https://gemmed.ghc-j.com/"
+encoding: UTF-8
+---
+name: "製薬企業からの適正使用等に関するお知らせ@PMDA"
+url: "https://www.pmda.go.jp/safety/info-services/drugs/calling-attention/properly-use-alert/0004.html"
+encoding: UTF-8
+---
+name: "ファイルダウンロード@診療報酬情報提供サービス"
+url: "https://shinryohoshu.mhlw.go.jp/shinryohoshu/downloadMenu/"
+encoding: Shift_JIS
+---
+#name: "全てのお知らせ一覧(日本化学療法学会)"
+#url: "https://www.chemotherapy.or.jp/modules/newslist/index.php?content_id=4"
+#encoding: UTF-8
+#ignore_cached: true
+---
+name: "診断群分類（DPC）電子点数表について(厚生労働省)"
+url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000198757_00008.html"
+encoding: UTF-8
+filter:
+  - html2text
+  # 必要に応じてcssやxpathで絞る
+
