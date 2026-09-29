@@ -3,7 +3,7 @@ name: webchanges Workflow
 on:
   schedule:
     - cron: '*/19 * * * *'
-  workflow_dispatch:
+#  workflow_dispatch:
 
 permissions:
   contents: write
