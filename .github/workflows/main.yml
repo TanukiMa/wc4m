@@ -2,7 +2,7 @@ name: webchanges Workflow
 
 on:
   schedule:
-    - cron: '*/57 * * * *'
+    - cron: '*/19 * * * *'
   workflow_dispatch:
 
 permissions:
