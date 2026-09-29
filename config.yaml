@@ -1,115 +1,142 @@
 display:
-  empty-diff: true
-  error: true
   new: true
+  error: true
   unchanged: false
+  empty-diff: true
 job_defaults:
   all: {}
-  browser: {}
-  shell: {}
   url: {}
+  browser: {}
+  command: {}
+differ_defaults: {}
 report:
-  discord:
-    colored: true
-    embed: false
-    enabled: false
-    max_message_length: 2000
-    subject: '{count} changes: {jobs}'
-    webhook_url: ''
-  email:
-    enabled: false
-    from: ''
-    html: false
-    method: smtp
-    reply_to: ''
-    sendmail:
-      path: sendmail
-    smtp:
-      auth: true
-      host: localhost
-      port: 25
-      starttls: true
-      user: ''
-    subject: '{count} changes: {jobs}'
-    to: ''
-  gotify:
-    enabled: false
-    priority: 0
-    server_url: ''
-    title: null
-    token: ''
-  html:
-    enabled: true
-    diff: unified
-    separate: false
-  ifttt:
-    enabled: false
-    event: ''
-    key: ''
-  mailgun:
-    api_key: ''
-    domain: ''
-    enabled: false
-    from_mail: ''
-    from_name: ''
-    region: us
-    subject: '{count} changes: {jobs}'
-    to: ''
-  markdown:
-    details: true
-    footer: true
-    minimal: false
-    separate: false
-  matrix:
-    access_token: ''
-    enabled: false
-    homeserver: ''
-    room_id: ''
-  mattermost:
-    enabled: false
-    max_message_length: 40000
-    webhook_url: ''
-  prowl:
-    api_key: ''
-    application: ''
-    enabled: false
-    priority: 0
-    subject: '{count} changes: {jobs}'
-  pushbullet:
-    api_key: ''
-    enabled: false
-  pushover:
-    app: ''
-    device: null
-    enabled: false
-    priority: normal
-    sound: spacealarm
-    user: ''
-  shell:
-    command: 
-    enabled: false
-    ignore_stderr: false
-    ignore_stdout: true
-  slack:
-    enabled: false
-    max_message_length: 40000
-    webhook_url: ''
-  stdout:
-    color: true
-    enabled: true
-  telegram:
-    bot_token: ''
-    chat_id: ''
-    enabled: false
-    monospace: false
-    silent: false
+  tz: Asia/Tokyo
   text:
     details: true
     footer: true
     line_length: 75
     minimal: false
     separate: false
+  html:
+    diff: unified
+    footer: true
+    separate: false
+    title: '[webchanges] {count} changes{jobs_files}: {jobs}'
+  markdown:
+    details: true
+    footer: true
+    minimal: false
+    separate: false
+  stdout:
+    enabled: true
+    color: true
+  browser:
+    enabled: false
+  discord:
+    enabled: false
+    webhook_url: ''
+    embed: false
+    subject: '{count} changes: {jobs}'
+    colored: true
+    max_message_length: 2000
+  email:
+    enabled: false
+    html: false
+    from: ''
+    to: ''
+    subject: '{count} changes: {jobs}'
+    method: smtp
+    smtp:
+      host: localhost
+      port: 25
+      starttls: true
+      auth: true
+      user: ''
+    sendmail:
+      path: sendmail
+  github_issue:
+    enabled: false
+    token: ''
+    owner: ''
+    repo: ''
+    title: ''
+    labels: []
+    format_dt: ''
+    format_content: ''
+    assignees: []
+    type: ''
+    milestone: ''
+  gotify:
+    enabled: false
+    priority: 0
+    server_url: ''
+    title: ''
+    token: ''
+  ifttt:
+    enabled: false
+    key: ''
+    event: ''
+  mailgun:
+    enabled: false
+    region: us
+    api_key: ''
+    domain: ''
+    from_mail: ''
+    from_name: ''
+    to: ''
+    subject: '{count} changes: {jobs}'
+  matrix:
+    enabled: false
+    homeserver: ''
+    access_token: ''
+    room_id: ''
+  ntfy:
+    enabled: false
+    topic_url: ''
+    authorization: null
+    priorities:
+      default: default
+      new: low
+      changed: max
+      error: high
+  prowl:
+    enabled: false
+    api_key: ''
+    priority: 0
+    application: ''
+    subject: '{count} changes: {jobs}'
+  pushbullet:
+    enabled: false
+    api_key: ''
+  pushover:
+    enabled: false
+    app: ''
+    device: null
+    sound: spacealarm
+    user: ''
+    priority: normal
+  run_command:
+    enabled: false
+    command: ''
+  telegram:
+    enabled: false
+    bot_token: ''
+    chat_id: ''
+    silent: false
+  webhook:
+    enabled: false
+    webhook_url: ''
+    markdown: false
+    rich_text: false
+    max_message_length: null
   xmpp:
     enabled: false
-    recipient: ''
     sender: ''
+    recipient: ''
+    insecure_password: null
+database:
+  engine: redis
+  max_snapshots: 4
+footnote: null
+version_check:
+  enabled: false

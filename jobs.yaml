@@ -26,6 +26,10 @@ encoding: UTF-8
 name: "GemMed"
 url: "https://gemmed.ghc-j.com/"
 encoding: UTF-8
+filter:
+  - css:
+      selector: 'html'
+      exclude: '.header-banner'
 ---
 name: "製薬企業からの適正使用等に関するお知らせ@PMDA"
 url: "https://www.pmda.go.jp/safety/info-services/drugs/calling-attention/properly-use-alert/0004.html"
@@ -34,6 +38,10 @@ encoding: UTF-8
 name: "ファイルダウンロード@診療報酬情報提供サービス"
 url: "https://shinryohoshu.mhlw.go.jp/shinryohoshu/downloadMenu/"
 encoding: Shift_JIS
+filter:
+  - re.sub:
+      pattern: 'jsessionid=[0-9A-Za-z]+'
+      repl: 'jsessionid=SESSIONID'
 ---
 #name: "全てのお知らせ一覧(日本化学療法学会)"
 #url: "https://www.chemotherapy.or.jp/modules/newslist/index.php?content_id=4"

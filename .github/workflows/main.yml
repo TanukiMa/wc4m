@@ -1,4 +1,4 @@
-name: URL Check Workflow
+name: webchanges Workflow
 
 on:
   schedule:
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check-urls:
+  webchanges:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install webchanges redis msgpack requests jinja2 pyyaml
+          uv pip install webchanges==3.37.0 redis msgpack jinja2 pyyaml
 
       - name: Run webchanges and generate GitHub Pages HTML
         id: generate_pages_html

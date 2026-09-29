@@ -1,115 +1,109 @@
 #!/usr/bin/env python3
+import re
 import sys
-import yaml
-import requests
 from datetime import datetime, timezone, timedelta
-from email.utils import parsedate_to_datetime
+
+import yaml
 from jinja2 import Template
 
 JST = timezone(timedelta(hours=9))
 WEEKDAYS_JA = ['月', '火', '水', '木', '金', '土', '日']
 
-def parse_urls_yaml(filepath):
-    sites = []
+# webchangesのジョブ判定(verb)を画面表示用のラベルに変換
+STATUS_LABELS = {
+    'NEW': '新規検知',
+    'CHANGED': '更新あり',
+    'ERROR': '取得エラー',
+    'UNCHANGED': '変更なし',
+    'UNCHANGED,ERROR_ENDED': 'エラー復旧',
+}
+
+# raw_output.txt冒頭のサマリー部の行 (例: "01. CHANGED: ジョブ名" / "CHANGED: ジョブ名")
+SUMMARY_LINE_RE = re.compile(r'^(?:\d+\.\s+)?([A-Z][A-Z, _]*)\s*:\s*(.+)$')
+
+
+def parse_jobs_yaml(filepath):
+    jobs = []
     with open(filepath, 'r', encoding='utf-8') as f:
-        docs = yaml.safe_load_all(f)
-        for doc in docs:
+        for doc in yaml.safe_load_all(f):
             if doc and isinstance(doc, dict) and 'url' in doc:
-                sites.append({
+                jobs.append({
                     'name': doc.get('name', doc['url']),
                     'url': doc['url'],
-                    'last_modified': '不明',
-                    'last_modified_dt': None,
-                    'etag': '-'
                 })
-    return sites
+    return jobs
+
+
+def parse_webchanges_summary(raw_output_file):
+    """webchangesの標準出力(raw_output.txt)先頭のサマリー部から、ジョブ名 -> 判定結果を取り出す。
+
+    サマリー部は '='*N の区切り線2本の間にあり、変更が全く無い実行では出力自体が空になる。
+    """
+    statuses = {}
+    try:
+        with open(raw_output_file, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        return statuses
+
+    separators = [i for i, line in enumerate(lines) if line and set(line) == {'='}]
+    if len(separators) < 2:
+        return statuses
+
+    for line in lines[separators[0] + 1:separators[1]]:
+        m = SUMMARY_LINE_RE.match(line.strip())
+        if m:
+            verb, name = m.groups()
+            # 'CHANGED,REPEATED' や 'ERROR,REPEATED' 等は先頭の判定に丸める
+            statuses[name] = verb.split(',')[0]
+    return statuses
+
 
 def format_jst_datetime(dt):
-    if not dt:
-        return '不明'
-    dt_jst = dt.astimezone(JST)
-    weekday = WEEKDAYS_JA[dt_jst.weekday()]
-    return f"{dt_jst.year}年{dt_jst.month:02d}月{dt_jst.day:02d}日（{weekday}）、{dt_jst.hour:02d}時{dt_jst.minute:02d}分{dt_jst.second:02d}秒（日本時間）"
+    weekday = WEEKDAYS_JA[dt.weekday()]
+    return f"{dt.year}年{dt.month:02d}月{dt.day:02d}日（{weekday}）、{dt.hour:02d}時{dt.minute:02d}分{dt.second:02d}秒（日本時間）"
 
-def fetch_headers(sites):
-    headers_info = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
-    for site in sites:
-        url = site['url']
-        last_modified_str = '不明'
-        last_modified_dt = None
-        etag = '-'
-        try:
-            res = requests.head(url, headers=headers, timeout=10, allow_redirects=True)
-            if res.status_code >= 400:
-                res = requests.get(url, headers=headers, timeout=10, stream=True)
-            
-            lm = res.headers.get('Last-Modified')
-            if lm:
-                try:
-                    dt = parsedate_to_datetime(lm)
-                    last_modified_dt = dt
-                    last_modified_str = format_jst_datetime(dt)
-                except Exception:
-                    last_modified_str = lm
-            
-            et = res.headers.get('ETag')
-            if et:
-                etag = et.strip('"')
-        except Exception as e:
-            last_modified_str = f"取得失敗 ({type(e).__name__})"
-
-        headers_info.append({
-            'name': site['name'],
-            'url': url,
-            'last_modified': last_modified_str,
-            'last_modified_dt': last_modified_dt,
-            'etag': etag
-        })
-    return headers_info
-
-def parse_recent_updates(sites_metadata):
-    # Last-Modified日時が存在するサイトを新しい順（降順）にソート
-    valid_sites = [s for s in sites_metadata if s['last_modified_dt'] is not None]
-    sorted_sites = sorted(valid_sites, key=lambda s: s['last_modified_dt'], reverse=True)
-    return sorted_sites
 
 def main():
-    urls_file = sys.argv[1] if len(sys.argv) > 1 else 'jobs.yaml'
+    jobs_file = sys.argv[1] if len(sys.argv) > 1 else 'jobs.yaml'
     raw_output_file = sys.argv[2] if len(sys.argv) > 2 else 'raw_output.txt'
     template_file = sys.argv[3] if len(sys.argv) > 3 else 'templates/index.html.j2'
     output_file = sys.argv[4] if len(sys.argv) > 4 else 'index.html'
 
-    # URL定義読み込み
-    sites = parse_urls_yaml(urls_file)
-    
-    # 各URLのレスポンスヘッダー取得
-    sites_metadata = fetch_headers(sites)
+    jobs = parse_jobs_yaml(jobs_file)
+    statuses = parse_webchanges_summary(raw_output_file)
 
-    # 最近更新された順にソートしたリスト
-    recent_updates = parse_recent_updates(sites_metadata)
+    sites = []
+    for job in jobs:
+        verb = statuses.get(job['name'], 'UNCHANGED')
+        sites.append({
+            'name': job['name'],
+            'url': job['url'],
+            'status': STATUS_LABELS.get(verb, verb),
+            'changed': verb in ('NEW', 'CHANGED'),
+            'error': verb == 'ERROR',
+        })
 
-    # テンプレート読み込み
+    recent_updates = [site for site in sites if site['changed']]
+    error_sites = [site for site in sites if site['error']]
+
     with open(template_file, 'r', encoding='utf-8') as f:
         template = Template(f.read())
 
-    # 現在日時 (JST)
-    now_dt = datetime.now(JST)
-    now_jst_formatted = format_jst_datetime(now_dt)
+    now_jst_formatted = format_jst_datetime(datetime.now(JST))
 
-    # HTMLレンダリング
     rendered_html = template.render(
         generated_at=now_jst_formatted,
         recent_updates=recent_updates,
-        sites=sites_metadata
+        error_sites=error_sites,
+        sites=sites,
     )
 
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(rendered_html)
-    
+
     print(f"Successfully generated {output_file}")
+
 
 if __name__ == '__main__':
     main()
