@@ -1,0 +1,77 @@
+name: URL Check Workflow
+
+on:
+  schedule:
+    - cron: '*/57 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  check-urls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install webchanges redis msgpack requests jinja2 pyyaml
+
+      - name: Run webchanges and generate GitHub Pages HTML
+        id: generate_pages_html
+        env:
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          mkdir -p public
+          # webchangesの実行結果を取得
+          set +e
+          uv run webchanges --jobs jobs.yaml --config config.yaml --cache "redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}" > raw_output.txt 2>&1
+          webchanges_exit_code=$?
+          set -e
+
+          # カスタムPythonスクリプトを実行して public/index.html を生成
+          uv run python scripts/build_page.py jobs.yaml raw_output.txt templates/index.html.j2 public/index.html
+
+          echo "pages_ready=true" >> "$GITHUB_OUTPUT"
+          echo "webchanges_exit_code=$webchanges_exit_code" >> "$GITHUB_OUTPUT"
+          if [ "$webchanges_exit_code" -le 1 ]; then
+            echo "webchanges_has_error=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "webchanges_has_error=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload artifact for GitHub Pages
+        id: upload_pages_artifact
+        if: ${{ success() && steps.generate_pages_html.outputs.pages_ready == 'true' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+
+      - name: Deploy to GitHub Pages
+        if: ${{ steps.generate_pages_html.outputs.webchanges_has_error == 'false' && steps.upload_pages_artifact.conclusion == 'success' }}
+        uses: actions/deploy-pages@v4
+
+      - name: Fail workflow when webchanges fails
+        if: ${{ steps.generate_pages_html.outputs.webchanges_has_error == 'true' }}
+        run: |
+          echo "webchanges failed with exit code ${{ steps.generate_pages_html.outputs.webchanges_exit_code }}"
+          exit 1
